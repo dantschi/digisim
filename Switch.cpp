@@ -29,7 +29,7 @@ void Switch::setState(bool state) {
  * Es gibt keine Abhängigkeiten oder Berechnungen zu machen
  */
 void Switch::evaluate() {
-    // Intentionally empty - Schalter benötigt keine Berechnung
+    return;
 }
 
 /**
