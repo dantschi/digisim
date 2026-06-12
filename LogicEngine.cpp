@@ -63,26 +63,38 @@ void LogicEngine::addComponent(std::unique_ptr<Gate> comp) {
  */
 void LogicEngine::doTick() {
     tickCount++;
-    std::cout << "\n[Tick " << tickCount << "] ========================================" << std::endl;
-    std::cout << "[Tick " << tickCount << "] Starte 2-Phasen-Zyklus für " << circuit.size() << " Komponenten" << std::endl;
+    if (verbose) {
+        std::cout << "\n[Tick " << tickCount << "] ========================================" << std::endl;
+        std::cout << "[Tick " << tickCount << "] Starte 2-Phasen-Zyklus für " << circuit.size() << " Komponenten" << std::endl;
+    }
     
     // ===== PHASE 1: RESET (Löschen des Cache) =====
-    std::cout << "\n[Tick " << tickCount << "] PHASE 1: RESET - Lösche Cachewerte..." << std::endl;
+    if (verbose) {
+        std::cout << "\n[Tick " << tickCount << "] PHASE 1: RESET - Lösche Cachewerte..." << std::endl;
+    }
     for (auto& comp : circuit) {
         comp->reset();
     }
-    std::cout << "[Tick " << tickCount << "] RESET abgeschlossen." << std::endl;
+    if (verbose) {
+        std::cout << "[Tick " << tickCount << "] RESET abgeschlossen." << std::endl;
+    }
     
     // ===== PHASE 2: EVALUATE (Kombinatorik berechnen) =====
-    std::cout << "\n[Tick " << tickCount << "] PHASE 2: EVALUATE - Berechne Logik..." << std::endl;
+    if (verbose) {
+        std::cout << "\n[Tick " << tickCount << "] PHASE 2: EVALUATE - Berechne Logik..." << std::endl;
+    }
     for (auto& comp : circuit) {
         comp->evaluate();
-        std::cout << "[Tick " << tickCount << "]   ✓ " << comp->getName() 
-                  << " => Output: " << (comp->getOutput() ? "1" : "0") << std::endl;
+        if (verbose) {
+            std::cout << "[Tick " << tickCount << "]   ✓ " << comp->getName() 
+                      << " => Output: " << (comp->getOutput() ? "1" : "0") << std::endl;
+        }
     }
     
     // ===== PHASE 3: CLOCK (Flip-Flops aktualisieren) =====
-    std::cout << "\n[Tick " << tickCount << "] PHASE 3: CLOCK - Update Flip-Flops..." << std::endl;
+    if (verbose) {
+        std::cout << "\n[Tick " << tickCount << "] PHASE 3: CLOCK - Update Flip-Flops..." << std::endl;
+    }
     int flipFlopCount = 0;
     for (auto& comp : circuit) {
         // Versuche zu prüfen, ob diese Komponente ein DFlipFlop ist
@@ -93,14 +105,18 @@ void LogicEngine::doTick() {
         
         if (flipFlop != nullptr) {
             // Das IST ein DFlipFlop -> rufe onClockTick() auf
-            std::cout << "[Tick " << tickCount << "]   ⏱ " << comp->getName() 
-                      << " erhält Taktsignal (onClockTick)" << std::endl;
+            if (verbose) {
+                std::cout << "[Tick " << tickCount << "]   ⏱ " << comp->getName() 
+                          << " erhält Taktsignal (onClockTick)" << std::endl;
+            }
             flipFlop->onClockTick();
             flipFlopCount++;
         }
     }
-    std::cout << "[Tick " << tickCount << "] " << flipFlopCount << " Flip-Flop(s) aktualisiert." << std::endl;
-    std::cout << "\n[Tick " << tickCount << "] ========================================" << std::endl;
+    if (verbose) {
+        std::cout << "[Tick " << tickCount << "] " << flipFlopCount << " Flip-Flop(s) aktualisiert." << std::endl;
+        std::cout << "\n[Tick " << tickCount << "] ========================================" << std::endl;
+    }
 }
 
 /**
@@ -108,6 +124,22 @@ void LogicEngine::doTick() {
  */
 int LogicEngine::getComponentCount() const {
     return circuit.size();
+}
+
+/**
+ * Setzt den Verbose-Modus für die Konsolenausgabe
+ * true = alle Debug-Ausgaben der doTick()-Methode werden angezeigt
+ * false = nur die wichtigsten Meldungen (Default - saubere Konsole für Timing-Diagramme)
+ * 
+ * Verwendung: engine.setVerbose(true) für vollständiges Debug-Tracking
+ */
+void LogicEngine::setVerbose(bool v) {
+    verbose = v;
+    if (verbose) {
+        std::cout << "[LogicEngine] Verbose-Modus aktiviert: Alle Takt-Details werden angezeigt" << std::endl;
+    } else {
+        std::cout << "[LogicEngine] Verbose-Modus deaktiviert: Nur minimale Ausgabe" << std::endl;
+    }
 }
 
 // =====================================================================

@@ -18,6 +18,7 @@ private:
     std::string circuitName;
     int tickCount;
     std::vector<std::unique_ptr<Gate>> circuit;  // Smart Pointers verwalten Speicher
+    bool verbose = false;  // Kontrolliert die Ausgabemenge der Konsole
 
 public:
     // Konstruktor: Initialisiert die Engine
@@ -39,6 +40,9 @@ public:
     // Dies verhindert, dass der Vektor ständig seinen Speicherbereich umzieht
     // (Heap-Reallokationen) wenn neue Komponenten hinzugefügt werden.
     void reserveComponents(int expectedCount);
+
+    // Setzt den Debug-Modus: true = ausführliche Konsolenausgabe, false = minimal
+    void setVerbose(bool v);
 
     // Berechnet einen Taktschritt: Evaluiert alle Komponenten
     void doTick();
