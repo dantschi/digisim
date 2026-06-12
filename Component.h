@@ -49,6 +49,12 @@ public:
     bool getOutput() const;
 
     /**
+     * Gibt den Namen des Gatters zurück
+     * @return Der Name als std::string
+     */
+    std::string getName() const;
+
+    /**
      * Rein virtuelle Methode: evaluate()
      * Berechnet den Ausgang basierend auf den verbundenen Eingängen (Pull-Prinzip)
      * Diese Methode MUSS von jeder abgeleiteten Klasse implementieren.

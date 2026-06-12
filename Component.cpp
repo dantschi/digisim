@@ -33,6 +33,13 @@ bool Gate::getOutput() const {
 }
 
 /**
+ * Getter für den Namen des Gatters
+ */
+std::string Gate::getName() const {
+    return m_name;
+}
+
+/**
  * Virtueller Destruktor: Wird aufgerufen wenn Objekt zerstört wird
  */
 Gate::~Gate() {

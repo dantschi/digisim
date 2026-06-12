@@ -1,4 +1,5 @@
 #include "LogicEngine.h"
+#include "DFlipFlop.h"
 #include <iostream>
 
 // ============================================
@@ -43,22 +44,63 @@ void LogicEngine::addComponent(std::unique_ptr<Gate> comp) {
 }
 
 /**
- * doTick(): Der Kern der Simulation!
+ * doTick(): Der Kern der Simulation - 2-Phasen-Zyklus
  * 
- * Dies ist der erste praktische Beispiel für Polymorphismus:
- * Wir wissen nicht, welchen konkreten Typ jede Komponente hat,
- * aber der Compiler generiert automatisch die richtigen virtuellen Aufrufe!
+ * Dies ist ein praktisches Beispiel für Polymorphismus mit dynamic_cast.
+ * Wir durchlaufen den Vektor mit Gate-Pointern und nutzen RTTI (Run-Time Type Info),
+ * um herauszufinden, welche Komponenten tatsächlich DFlipFlops sind!
+ * 
+ * Phasen der Simulation:
+ * =====================
+ * 1. RESET-Phase: Alle Gates "vergessen" ihre Cachewerte (Amnesie)
+ * 2. EVALUATE-Phase: Alle Gates berechnen ihre kombinatorische Logik
+ * 3. CLOCK-Phase: Nur DFlipFlops werden aktualisiert (Speicher-Schreib-Phase)
+ * 
+ * Warum das funktioniert:
+ * - evaluate() ist virtuell -> richtige Gatter-Logik wird aufgerufen
+ * - dynamic_cast<DFlipFlop*> identifiziert Flip-Flops zur Laufzeit
+ * - onClockTick() existiert NUR auf DFlipFlop, nicht auf normalen Gates
  */
 void LogicEngine::doTick() {
     tickCount++;
-    std::cout << "\n[Tick " << tickCount << "] Evaluiere " << circuit.size() 
-              << " Komponenten:" << std::endl;
+    std::cout << "\n[Tick " << tickCount << "] ========================================" << std::endl;
+    std::cout << "[Tick " << tickCount << "] Starte 2-Phasen-Zyklus für " << circuit.size() << " Komponenten" << std::endl;
     
-    for (auto& c : circuit) {
-        // Polymorphe Funktion: Der Compiler findet automatisch die richtige evaluate()-Methode!
-        c->evaluate();
-        std::cout << "  => Ausgabe: " << (c->getOutput() ? "true" : "false") << std::endl;
+    // ===== PHASE 1: RESET (Löschen des Cache) =====
+    std::cout << "\n[Tick " << tickCount << "] PHASE 1: RESET - Lösche Cachewerte..." << std::endl;
+    for (auto& comp : circuit) {
+        comp->reset();
     }
+    std::cout << "[Tick " << tickCount << "] RESET abgeschlossen." << std::endl;
+    
+    // ===== PHASE 2: EVALUATE (Kombinatorik berechnen) =====
+    std::cout << "\n[Tick " << tickCount << "] PHASE 2: EVALUATE - Berechne Logik..." << std::endl;
+    for (auto& comp : circuit) {
+        comp->evaluate();
+        std::cout << "[Tick " << tickCount << "]   ✓ " << comp->getName() 
+                  << " => Output: " << (comp->getOutput() ? "1" : "0") << std::endl;
+    }
+    
+    // ===== PHASE 3: CLOCK (Flip-Flops aktualisieren) =====
+    std::cout << "\n[Tick " << tickCount << "] PHASE 3: CLOCK - Update Flip-Flops..." << std::endl;
+    int flipFlopCount = 0;
+    for (auto& comp : circuit) {
+        // Versuche zu prüfen, ob diese Komponente ein DFlipFlop ist
+        // dynamic_cast<DFlipFlop*>() gibt:
+        //   - Ein valider Pointer, wenn comp wirklich ein DFlipFlop ist
+        //   - nullptr, wenn comp kein DFlipFlop ist
+        DFlipFlop* flipFlop = dynamic_cast<DFlipFlop*>(comp.get());
+        
+        if (flipFlop != nullptr) {
+            // Das IST ein DFlipFlop -> rufe onClockTick() auf
+            std::cout << "[Tick " << tickCount << "]   ⏱ " << comp->getName() 
+                      << " erhält Taktsignal (onClockTick)" << std::endl;
+            flipFlop->onClockTick();
+            flipFlopCount++;
+        }
+    }
+    std::cout << "[Tick " << tickCount << "] " << flipFlopCount << " Flip-Flop(s) aktualisiert." << std::endl;
+    std::cout << "\n[Tick " << tickCount << "] ========================================" << std::endl;
 }
 
 /**
