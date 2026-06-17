@@ -8,8 +8,9 @@
 /**
  * Gate (Basisklasse) - Abstraktion für alle Logikgatter
  * 
- * Neue Architektur (Labor 7):
- * - Gatter werden über Smart Pointers (std::shared_ptr) verbunden
+ * Architektur (Labor 11):
+ * - LogicEngine besitzt alle Gatter via std::unique_ptr (Ownership)
+ * - Gatter referenzieren andere Gatter via Raw Pointers (Non-owning Verweise)
  * - Ein Vektor m_inputs speichert alle Eingänge (Adjazenzliste / DAG)
  * - Jedes Gatter kennt die Anzahl seiner benötigten Eingänge
  * - evaluate() zieht sich Werte aktiv über die Pointer (Pull-Prinzip)
@@ -22,7 +23,7 @@ protected:
     // Geschützte Attribute
     std::string m_name;
     bool m_output;
-    std::vector<std::shared_ptr<Gate>> m_inputs;  // ← Die "Kupferkabel"
+    std::vector<Gate*> m_inputs;  // ← Non-owning Raw Pointers zu anderen Gattern
     
     // ===== Labor 9: Memoization & Zyklus-Schutz =====
     bool m_isCalculated = false;  // Cache-Flag: "Wurde ich schon berechnet?"
@@ -36,11 +37,12 @@ public:
 
     /**
      * Verbindet einen Eingang mit einem anderen Gatter (Kabel-Plugin)
-     * Includes Hardware-Schutzschaltung (Out-of-Bounds Check)
+     * WICHTIG: Erwartet Raw Pointers (Non-owning Verweise)!
+     * Die LogicEngine behält die Ownership über alle Gatter.
      * @param index Der Pin-Index (0, 1, ...)
-     * @param source Das Quell-Gatter
+     * @param source Das Quell-Gatter (Raw Pointer - kein Ownership Transfer!)
      */
-    void connectInput(int index, std::shared_ptr<Gate> source);
+    void connectInput(int index, Gate* source);
 
     /**
      * Gibt den aktuellen Ausgangswert zurück
