@@ -77,7 +77,23 @@ public:
     virtual void printState() const = 0;
 
     /**
+     * Gibt den Typ des Gatters als String zurück
+     * Wird für das Speichern in .circuit Dateien verwendet
+     * @return Der Typ-Name (z.B. "AND", "OR", "SWITCH", "DFF")
+     */
+    virtual std::string getType() const = 0;
+
+    /**
+     * Gibt die Eingänge dieses Gatters zurück (für saveToFile)
+     * @return Vektor der Eingänge (Raw Pointers)
+     */
+    const std::vector<Gate*>& getInputs() const {
+        return m_inputs;
+    }
+
+    /**
      * Virtueller Destruktor: Sichert korrekte Cleanup-Reihenfolge bei Polymorphismus
      */
     virtual ~Gate();
 };
+

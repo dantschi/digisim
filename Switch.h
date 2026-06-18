@@ -38,4 +38,6 @@ public:
      * Gibt den aktuellen Zustand des Schalters aus
      */
     void printState() const override;
+
+    std::string getType() const override { return "SWITCH"; }
 };

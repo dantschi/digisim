@@ -46,6 +46,8 @@ public:
      */
     void printState() const override;
 
+    std::string getType() const override { return "DFFE"; }
+
     /**
      * Virtueller Destruktor
      */

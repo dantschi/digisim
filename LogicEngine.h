@@ -49,4 +49,35 @@ public:
 
     // Gibt die Anzahl der Komponenten zurück
     int getComponentCount() const;
+
+    // =====================================================================
+    // Phase 2: Datei-I/O für .circuit Format
+    // =====================================================================
+    
+    /**
+     * Sucht ein Gatter nach seinem Namen
+     * @param name Der Name des gesuchten Gatters
+     * @return Raw Pointer auf das Gatter, oder nullptr wenn nicht gefunden
+     * 
+     * WICHTIG: Der zurückgegebene Pointer ist Non-Owning!
+     * Die LogicEngine behält die Ownership über das Objekt.
+     */
+    Gate* getGateByName(const std::string& name);
+    
+    /**
+     * Lädt eine .circuit Datei und baut die Schaltung automatisch auf
+     * 
+     * Format:
+     *   GATE <type> <name>   (z.B. GATE AND myAnd1)
+     *   WIRE <target> <pin> <source>  (z.B. WIRE myAnd1 0 swA)
+     * 
+     * @param filename Der Pfad zur .circuit Datei
+     */
+    void loadFromFile(const std::string& filename);
+    
+    /**
+     * Speichert die aktuelle Schaltung in eine .circuit Datei
+     * @param filename Der Ziel-Pfad
+     */
+    void saveToFile(const std::string& filename);
 };

@@ -30,4 +30,6 @@ public:
      * Gibt den aktuellen Zustand aus
      */
     void printState() const override;
+
+    std::string getType() const override { return "XOR"; }
 };

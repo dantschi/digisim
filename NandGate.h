@@ -29,6 +29,8 @@ public:
      * Gibt den aktuellen Zustand des Gatters aus
      */
     void printState() const override;
+
+    std::string getType() const override { return "NAND"; }
 };
 
 

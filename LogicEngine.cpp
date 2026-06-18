@@ -1,6 +1,9 @@
 #include "LogicEngine.h"
 #include "DFlipFlop.h"
+#include "GateFactory.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 // ============================================
 // LogicEngine Implementation
@@ -186,4 +189,175 @@ void LogicEngine::reserveComponents(int expectedCount) {
     std::cout << "[LogicEngine] Speicher reserviert für " << expectedCount 
               << " Komponenten. Aktuelle Kapazität: " << circuit.capacity() 
               << " (size: " << circuit.size() << ")" << std::endl;
+}
+
+// =====================================================================
+// Phase 2: Datei-I/O für .circuit Format
+// =====================================================================
+
+/**
+ * Sucht ein Gatter nach seinem Namen
+ */
+Gate* LogicEngine::getGateByName(const std::string& name) {
+    for (auto& comp : circuit) {
+        if (comp->getName() == name) {
+            return comp.get();  // Gib Raw Pointer zurück (Non-Owning!)
+        }
+    }
+    // Nicht gefunden
+    std::cerr << "[LogicEngine] FEHLER: Gatter '" << name << "' nicht gefunden!" << std::endl;
+    return nullptr;
+}
+
+/**
+ * Lädt eine .circuit Datei und baut die Schaltung automatisch auf
+ * 
+ * Format der Datei:
+ * - Zeilen mit GATE erstellen neue Komponenten über die Factory
+ * - Zeilen mit WIRE verbinden die Gatter
+ * 
+ * Parsing:
+ * - std::stringstream zerlegt jede Zeile an Leerzeichen
+ * - Blanke Zeilen und Kommentare werden ignoriert
+ */
+void LogicEngine::loadFromFile(const std::string& filename) {
+    std::cout << "\n[LogicEngine] Lade Schaltung aus Datei: " << filename << std::endl;
+    
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "[LogicEngine ERROR] Kann Datei nicht öffnen: " << filename << std::endl;
+        return;
+    }
+    
+    std::string line;
+    int lineNumber = 0;
+    int gateCount = 0, wireCount = 0;
+    
+    while (std::getline(file, line)) {
+        lineNumber++;
+        
+        // Ignoriere leere Zeilen
+        if (line.empty()) continue;
+        
+        // Ignoriere Kommentare (Zeilen die mit # oder // beginnen)
+        if (line[0] == '#' || (line.length() > 1 && line[0] == '/' && line[1] == '/')) {
+            continue;
+        }
+        
+        // Parse die Zeile mit stringstream
+        std::stringstream ss(line);
+        std::string command;
+        ss >> command;  // Erstes Wort extrahieren
+        
+        // ===== GATE Zeilen =====
+        if (command == "GATE") {
+            std::string type, name;
+            ss >> type >> name;
+            
+            if (type.empty() || name.empty()) {
+                std::cerr << "[LogicEngine WARNING] Zeile " << lineNumber 
+                          << ": GATE Format ungültig" << std::endl;
+                continue;
+            }
+            
+            // Nutze die Factory, um das Gatter zu erstellen
+            auto gate = GateFactory::createGate(type, name);
+            if (gate == nullptr) {
+                std::cerr << "[LogicEngine ERROR] Zeile " << lineNumber 
+                          << ": Unbekannter Gatter-Typ '" << type << "'" << std::endl;
+                continue;
+            }
+            
+            // Füge das neue Gatter der Engine hinzu
+            addComponent(std::move(gate));
+            gateCount++;
+        }
+        
+        // ===== WIRE Zeilen =====
+        else if (command == "WIRE") {
+            std::string targetName, sourceName;
+            int pin = -1;
+            ss >> targetName >> pin >> sourceName;
+            
+            if (targetName.empty() || pin < 0 || sourceName.empty()) {
+                std::cerr << "[LogicEngine WARNING] Zeile " << lineNumber 
+                          << ": WIRE Format ungültig (Syntax: WIRE <target> <pin> <source>)" << std::endl;
+                continue;
+            }
+            
+            // Finde beide Gatter
+            Gate* target = getGateByName(targetName);
+            Gate* source = getGateByName(sourceName);
+            
+            if (target == nullptr || source == nullptr) {
+                std::cerr << "[LogicEngine ERROR] Zeile " << lineNumber 
+                          << ": Gatter nicht gefunden" << std::endl;
+                continue;
+            }
+            
+            // Verbinde sie
+            target->connectInput(pin, source);
+            wireCount++;
+        }
+        
+        // Unbekannter Befehl - ignorieren
+        else if (!command.empty()) {
+            std::cerr << "[LogicEngine WARNING] Zeile " << lineNumber 
+                      << ": Unbekannter Befehl '" << command << "'" << std::endl;
+        }
+    }
+    
+    file.close();
+    
+    std::cout << "[LogicEngine] Datei geladen: " << gateCount << " Gatter, " 
+              << wireCount << " Verbindungen" << std::endl << std::endl;
+}
+
+/**
+ * Speichert die aktuelle Schaltung in eine .circuit Datei
+ * 
+ * Prozess:
+ * 1. Schreibe alle GATE-Zeilen (mit Hilfe der virtuellen getType() Methode)
+ * 2. Schreibe alle WIRE-Zeilen (indem wir die Inputs durchsuchen)
+ */
+void LogicEngine::saveToFile(const std::string& filename) {
+    std::cout << "\n[LogicEngine] Speichere Schaltung in Datei: " << filename << std::endl;
+    
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "[LogicEngine ERROR] Kann Datei nicht zum Schreiben öffnen: " << filename << std::endl;
+        return;
+    }
+    
+    // ===== Phase 1: Schreibe alle GATE-Zeilen =====
+    file << "# Automatisch generierte .circuit Datei" << std::endl;
+    file << "# Format: GATE <type> <name>" << std::endl;
+    file << "# Format: WIRE <target> <pin> <source>" << std::endl << std::endl;
+    
+    file << "# ===== Bauteile =====" << std::endl;
+    for (const auto& comp : circuit) {
+        file << "GATE " << comp->getType() << " " << comp->getName() << std::endl;
+    }
+    
+    file << std::endl << "# ===== Verbindungen =====" << std::endl;
+    
+    // ===== Phase 2: Schreibe alle WIRE-Zeilen =====
+    for (const auto& target : circuit) {
+        const auto& inputs = target->getInputs();
+        
+        // Durchsuche alle Eingänge des Ziel-Gatters
+        for (size_t pinIndex = 0; pinIndex < inputs.size(); pinIndex++) {
+            Gate* sourceGate = inputs[pinIndex];
+            
+            // Ignoriere nullptr-Eingänge (nicht verbundene Pins)
+            if (sourceGate != nullptr) {
+                file << "WIRE " << target->getName() 
+                     << " " << pinIndex 
+                     << " " << sourceGate->getName() << std::endl;
+            }
+        }
+    }
+    
+    file.close();
+    std::cout << "[LogicEngine] Schaltung gespeichert!" << std::endl << std::endl;
 }

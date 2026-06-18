@@ -1,0 +1,15 @@
+# Automatisch generierte .circuit Datei
+# Format: GATE <type> <name>
+# Format: WIRE <target> <pin> <source>
+
+# ===== Bauteile =====
+GATE SWITCH A
+GATE SWITCH B
+GATE XOR sum
+GATE AND carry
+
+# ===== Verbindungen =====
+WIRE sum 0 A
+WIRE sum 1 B
+WIRE carry 0 A
+WIRE carry 1 B

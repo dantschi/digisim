@@ -50,6 +50,8 @@ public:
      */
     void printState() const override;
 
+    std::string getType() const override { return "DFF"; }
+
     /**
      * Virtueller Destruktor
      */

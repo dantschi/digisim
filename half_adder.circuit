@@ -1,0 +1,20 @@
+# Halbaddierer (Half Adder) Schaltung
+# Format: GATE <type> <name>
+#         WIRE <target> <pin> <source>
+
+# ===== Eingänge =====
+GATE SWITCH A
+GATE SWITCH B
+
+# ===== Ausgänge =====
+GATE XOR sum
+GATE AND carry
+
+# ===== Verbindungen =====
+# XOR für Sum (Summe): A XOR B
+WIRE sum 0 A
+WIRE sum 1 B
+
+# AND für Carry (Übertrag): A AND B
+WIRE carry 0 A
+WIRE carry 1 B
