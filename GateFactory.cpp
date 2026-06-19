@@ -20,8 +20,10 @@
  * - Output: std::unique_ptr<Gate> (konkrete Instanz)
  * - Error-Handling: nullptr + Fehlermeldung auf stderr
  */
-std::unique_ptr<Gate> GateFactory::createGate(const std::string& type, 
-                                             const std::string& name) {
+std::unique_ptr<Gate> GateFactory::createGate(const std::string& type,
+                                             const std::string& name,
+                                             const std::string& romFilePath) {
+    (void)romFilePath;  // TODO Testat Teil 1: für Typ "ROM" an RomGate-Konstruktor weitergeben
     // ===== Kombinatorische Gatter =====
     if (type == "AND") {
         std::cout << "[GateFactory] Erstelle AND-Gatter: " << name << std::endl;
@@ -68,6 +70,7 @@ std::unique_ptr<Gate> GateFactory::createGate(const std::string& type,
     else {
         std::cerr << "[GateFactory ERROR] Unbekannter Gatter-Typ: '" << type << "'" << std::endl;
         std::cerr << "  Bekannte Typen: AND, OR, XOR, NOT, NAND, SWITCH, DFF, DFFE" << std::endl;
+        std::cerr << "  TODO Testat: ROM, ASSERT hinzufügen" << std::endl;
         return nullptr;
     }
 }

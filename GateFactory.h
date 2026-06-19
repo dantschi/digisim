@@ -28,8 +28,9 @@ public:
     /**
      * Erzeugt ein Gatter-Objekt basierend auf dem Typenamen
      * 
-     * @param type Der Gatter-Typ als String (z.B. "AND", "OR", "NOT", "XOR", "SWITCH", "DFF")
+     * @param type Der Gatter-Typ als String (z.B. "AND", "OR", "NOT", "XOR", "SWITCH", "DFF", "ROM")
      * @param name Der Name des zu erstellenden Gatters
+     * @param romFilePath Optional: Pfad zur .rom-Datei (nur für Typ "ROM", Testat Teil 1)
      * @return Ein std::unique_ptr auf das neue Gatter, oder nullptr bei Fehler
      * 
      * Beispiele:
@@ -37,6 +38,7 @@ public:
      *   GateFactory::createGate("SWITCH", "inputA") → Switch-Objekt
      *   GateFactory::createGate("UNKNOWN", "fail") → nullptr + Fehlermeldung
      */
-    static std::unique_ptr<Gate> createGate(const std::string& type, 
-                                           const std::string& name);
+    static std::unique_ptr<Gate> createGate(const std::string& type,
+                                           const std::string& name,
+                                           const std::string& romFilePath = "");
 };

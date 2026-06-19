@@ -1,308 +1,202 @@
-# C++ Digital Simulator 🔌
+# C++ Digital Simulator – Abschluss-Testat
 
 [![C++ Automated Tests](https://github.com/dantschi/digisim/actions/workflows/ci.yml/badge.svg)](https://github.com/dantschi/digisim/actions/workflows/ci.yml)
 
-Ein **C++-basierter Simulator für digitale Logikgatter** mit automatisierter CI/CD-Pipeline – ideal zum Verständnis von Schaltlogik, Speichermanagement und DevOps-Konzepten.
+Ein **C++-basierter Simulator für digitale Logikgatter** – Ausgangspunkt für das Abschluss-Testat *ROM-Speicher & Automatisierte Testbench*.
 
-## 📋 Überblick
-
-Dieses Projekt implementiert einen vollständigen Logik-Simulator mit verschiedenen digitalen Gattern:
-
-- **AND-Gate** – Logisches UND
-- **OR-Gate** – Logisches ODER  
-- **NOT-Gate** – Logische Negation
-- **XOR-Gate** – Exklusives ODER
-- **NAND-Gate** – Negiertes UND
-
-## Labor 10: Sequenzielle Logik, Takt & das D-Flip-Flop
-
-### Phase 1: Die Klasse DFlipFlop
-
-**Dateien**: `DFlipFlop.h` / `DFlipFlop.cpp`
-
-Das D-Flip-Flop ist das elementarste Speicherbauteil:
-- **1 Eingangs-Pin** (m_inputs.size() == 1)
-- **Private Variable** `bool m_storedState = false;` (der "Tresor")
-- **evaluate()** gibt NICHT den Input aus, sondern `m_storedState` (Firewall!)
-- **onClockTick()** speichert den Input-Wert bei der Taktflanke
-
-**Kritisch**: Die Firewall-Funktion in `evaluate()`:
-```cpp
-void DFlipFlop::evaluate() {
-    // NICHT: m_inputs[0]->evaluate();  ← Keine Rekursion!
-    m_output = m_storedState;           // ← Gibt alten Wert zurück
-    m_isCalculated = true;
-}
-```
-
-### Phase 2: Die 2-Phasen-Schleife & DFS-Korrektur
-
-Die Simulation in **main.cpp** implementiert ein 4-Stufen-Zyklus pro Takt:
-
-```
-Phase A (Amnesie):
-  Alle Gatter reset() aufrufen → m_isCalculated = false
-
-Phase B (Lesen):
-  Kombinatorische Gatter evaluieren
-  NOT->evaluate() wird aufgerufen
-
-Phase C (Ausgabe):
-  DFF-Ausgang drucken
-
-Phase D (Schreiben):
-  onClockTick() auf alle Flip-Flops aufrufen
-  Sie speichern die stabilen Werte
-```
-
-**Wichtig**: `notGate->evaluate()` MUSS in Phase B aufgerufen werden! Das DFF evaluiert seinen Input nicht (Firewall), daher muss die Logik davor explizit berechnet werden.
-
-### Phase 3: Der 1-Bit Zähler
-
-**Schaltung**: Ringverkabelung ohne Stack Overflow!
-```
-DFlipFlop --[NOT]--+
-^                  |
-|__________________|
-```
-
-**Verhalten**: Die Ausgabe toggelt bei jedem Takt
-- Takt 0: Output = 0
-- Takt 1: Output = 1
-- Takt 2: Output = 0
-- Takt 3: Output = 1
-- ...
-
-**Warum funktioniert das?**
-1. Die Firewall (DFF.evaluate()) bricht die Rekursion ab
-2. Die 2-Phasen-Trennung sorgt für stabile Werte
-3. onClockTick() speichert erst nach vollständiger Berechnung
-
-### 🎯 Zusatzaufgabe 1: D-Flip-Flop mit Enable-Pin (DFFE)
-
-**Dateien**: `DFlipFlopEnable.h` / `DFlipFlopEnable.cpp`
-
-```cpp
-// 2 Pins statt 1:
-//   Pin 0: D (Daten-Eingang)
-//   Pin 1: EN (Enable-Signal)
-
-void DFlipFlopEnable::onClockTick() {
-    bool enableSignal = m_inputs[1]->getOutput();
-    bool dataValue = m_inputs[0]->getOutput();
-    
-    if (enableSignal) {
-        m_storedState = dataValue;  // Speichere NUR wenn EN=1
-    }
-}
-```
-
-**Anwendung**: Zähler können pausiert/angehalten werden
-
-### 🎯 Zusatzaufgabe 2: Der 2-Bit Zähler
-
-**Datei**: `main_zusatz.cpp`
-
-**Schaltung**:
-```
-Bit 0 (Standard 1-Bit Ring):
-  DFF0 ←→ NOT0
-
-Bit 1 (Kaskadierter Zähler):
-  XOR1-Input0 = DFF0-Output (Bit 0)
-  XOR1-Input1 = DFF1-Output (Bit 1)
-  DFF1 ← XOR1-Output
-```
-
-**Zähler-Sequenz**: 0 (00) → 1 (01) → 2 (10) → 3 (11) → 0 (00) ...
-
-**Wie es funktioniert**:
-- **Bit 0** toggelt JEDEN Takt: 0 → 1 → 0 → 1 ...
-- **Bit 1** toggelt NUR wenn Bit 0 = 1 ist:
-  - XOR(0, x) = x (kein Toggle)
-  - XOR(1, x) = ¬x (Toggle)
-
-Dies ist die korrekte Carry-Logik für binäre Zähler!
-
-## 🔧 Compilation
-
-```bash
-# 1-Bit Zähler (Phase 1-3)
-g++ -std=c++17 -o simulator main.cpp Component.cpp NotGate.cpp AndGate.cpp \
-    OrGate.cpp XorGate.cpp NandGate.cpp Switch.cpp DFlipFlop.cpp
-
-# Mit Zusatzaufgaben (DFFE + 2-Bit Zähler)
-g++ -std=c++17 -o simulator_zusatz main_zusatz.cpp Component.cpp NotGate.cpp \
-    AndGate.cpp OrGate.cpp XorGate.cpp NandGate.cpp Switch.cpp DFlipFlop.cpp \
-    DFlipFlopEnable.cpp
-```
-
-## ▶️ Ausführung
-
-```bash
-# 1-Bit Zähler (10 Takte)
-.\simulator.exe
-
-# Zusatzaufgaben Demo
-.\simulator_zusatz.exe
-```
-
-## ✅ Fehler-Checkliste
-
-| Problem | Ursache | Lösung |
-|---------|---------|--------|
-| Stack Overflow | DFF ruft Input->evaluate() auf | DFF->evaluate() darf Input nicht evaluieren |
-| Output bleibt 0 | NOT wird nicht evaluiert | `notGate->evaluate()` in Phase B aufrufen |
-| Kompilierungsfehler | onClockTick() auf Gate-Pointer | Verwende separate `std::vector<std::shared_ptr<DFlipFlop>>` |
-| Wert ändert sich nie | onClockTick() wird nicht aufgerufen | Phase D-Schleife über allFlipFlops überprüfen |
-
-## 📚 Lernziele
-
-✅ D-Flip-Flops als Firewall gegen Zyklen verstehen
-✅ 2-Phasen-Simulation (Lesen/Schreiben) implementieren
-✅ Post-Order DFS mit Memoization anwenden
-✅ Ringverkabelung ohne Endlosschleife
-✅ Kaskadierte/Multi-Bit-Zähler bauen
-✅ Enable-Signale für selektive Speicherung nutzen
-
-## 📂 Labor 10 - Dateien
-
-| Datei | Inhalt |
-|-------|--------|
-| `DFlipFlop.h` | Basis D-Flip-Flop Header |
-| `DFlipFlop.cpp` | Basis D-Flip-Flop Implementierung |
-| `DFlipFlopEnable.h` | DFFE Header (Zusatzaufgabe 1) |
-| `DFlipFlopEnable.cpp` | DFFE Implementierung (Zusatzaufgabe 1) |
-| `main.cpp` | 1-Bit Zähler mit 2-Phasen-Simulation |
-| `main_zusatz.cpp` | DFFE + 2-Bit Zähler Demo (Zusatzaufgaben) |
+Die vollständige Aufgabenstellung finden Sie in **`LaboranleitungTestat.pdf`**.
 
 ---
 
-```
-├── Component.h/cpp        # Abstrakte Basisklasse für alle Gatter
-├── LogicEngine.h/cpp      # Kern-Engine zur Verwaltung von Schaltungen
-├── AndGate.h/cpp          # AND-Gatter-Implementierung
-├── OrGate.h/cpp           # OR-Gatter-Implementierung
-├── NotGate.h/cpp          # NOT-Gatter-Implementierung
-├── XorGate.h/cpp          # XOR-Gatter-Implementierung
-├── NandGate.h/cpp         # NAND-Gatter-Implementierung
-├── main.cpp               # Automatisierte Test-Suite mit Exit-Codes
-├── README.md              # Diese Datei
-└── .github/
-    └── workflows/
-        └── ci.yml         # GitHub Actions CI/CD Pipeline
-```
+## Angaben zur Abgabe
 
-## 🎯 Kernkonzepte
-
-### Polymorphismus
-Alle Gatter erben von der abstrakten Basisklasse `Component` und implementieren die virtuelle Methode `update()`. Die `LogicEngine` verwaltet die Komponenten polymorphisch über `std::unique_ptr<Component>`.
-
-### Speichermanagement
-Das Projekt demonstriert modernes C++ Speichermanagement mit:
-- **Smart Pointers** (`std::unique_ptr`) statt rohe Zeiger
-- Automatische Speicherfreigabe ohne Memory Leaks
-- RAII-Prinzip (Resource Acquisition Is Initialization)
-
-### CI/CD & Automatisierung
-GitHub Actions triggert automatisch bei jedem `git push`:
-- ✅ Code-Kompilierung
-- ✅ Wahrheitstabellen-Tests (19 automatisierte Tests)
-- ✅ Exit-Code Validierung
-- ✅ Statische Code-Analyse (cppcheck)
-
-## 🚀 Kompilierung & Ausführung
-
-### Voraussetzungen
-- C++17 oder höher
-- Ein C++-Compiler (GCC, Clang, MSVC)
-
-### Lokal kompilieren
-```bash
-g++ *.cpp -o simulator
-./simulator
-```
-
-### Erfolg (Exit-Code 0)
-```
-Test Summary:
-Bestanden: 19 / 19
-========================================
-
-[SUCCESS] Alle Tests bestanden! ✓
-```
-
-### Fehler (Exit-Code 1)
-```
-[FEHLER] Mindestens ein Test fehlgeschlagen!
-Die CI-Pipeline wird dies als FEHLER markieren.
-```
-
-## 🤖 Automatisierte Tests
-
-Die `main.cpp` führt umfassende Wahrheitstabellen-Tests durch:
-
-| Gatter | Tests | Status |
-|--------|-------|--------|
-| AND    | 4     | ✓      |
-| OR     | 4     | ✓      |
-| NOT    | 2     | ✓      |
-| XOR    | 4     | ✓      |
-| NAND   | 4     | ✓      |
-| Integration | 1 | ✓      |
-| **Gesamt** | **19** | **✓** |
-
-## 📊 GitHub Actions Pipeline
-
-Jeden `git push` ausgelöst:
-
-```yaml
-on:
-  push:
-    branches: [ "main" ]
-
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Kompiliere
-        run: g++ *.cpp -o simulator
-      - name: Teste
-        run: ./simulator
-      - name: Static Analysis
-        run: cppcheck --enable=all --error-exitcode=1 *.cpp
-```
-
-Der Status wird oben als Badge angezeigt! ✨
-
-## 💾 Verwendungsbeispiel
-
-```cpp
-LogicEngine engine;
-engine.setCircuitName("Beispiel-Schaltung");
-
-// Komponenten hinzufügen
-engine.addComponent(std::make_unique<AndGate>("AND-1"));
-engine.addComponent(std::make_unique<OrGate>("OR-1"));
-
-// Schaltung simulieren
-engine.doTick();
-```
-
-## 📚 Weitere Informationen
-
-Dieses Projekt ist Teil des Moduls **Informatik 2 – Labor 7** an der DHBW Stuttgart und behandelt:
-- Objektorientiertes Programmieren (OOP)
-- Speichermanagement mit Smart Pointers
-- DevOps & Continuous Integration
-- Automatisierte Testausführung
-
-## 📝 Lizenz
-
-Hochschulprojekt – Verwendung zu Bildungszwecken.
+**Name:** _[Ihr Name]_  
+**Matrikelnummer:** _[Ihre Matrikelnummer]_  
+**GitHub-Repository:** _[URL zu Ihrem privaten Repo]_
 
 ---
 
-**Viel Erfolg beim Programmieren!** 🎓
+## Repository-Setup (zu Beginn des Testats)
+
+1. **Privates Repository** aus dem Template erstellen: [github.com/dantschi/digisim](https://github.com/dantschi/digisim) → „Use this template“ → **Private**
+2. **Dozent einladen:** Settings → Collaborators → `dantschi` hinzufügen
+3. **Klonen und öffnen:**
+   ```bash
+   git clone https://github.com/IHR-USERNAME/IHR-REPO-NAME.git
+   cd IHR-REPO-NAME
+   code .
+   ```
+4. **Abgabe:** Code pushen, **diese README.md** ausfüllen, Repository-URL in Moodle einreichen
+
+---
+
+## Ausgangszustand
+
+Das Projekt basiert auf **Labor 12** (GateFactory & `.circuit`-Parser) und ist sofort lauffähig:
+
+- `main.cpp` – demonstriert den Halbaddierer aus `half_adder.circuit`
+- `GateFactory` – erzeugt Gatter aus Textdateien
+- `LogicEngine` – lädt `.circuit`-Dateien und simuliert Takte
+
+```bash
+g++ -std=c++17 *.cpp -o simulator
+./simulator        # Linux/macOS
+.\simulator.exe    # Windows
+```
+
+Erwartete Ausgabe: Wahrheitstabelle des Halbaddierers (Sum & Carry für alle Eingabekombinationen).
+
+---
+
+## Ihre Aufgaben
+
+### Teil 1: RomGate (Pflicht – zum Bestehen)
+
+| Schritt | Was zu tun ist |
+|--------|----------------|
+| 1 | Klasse `RomGate` neu anlegen (`RomGate.h` / `RomGate.cpp`) |
+| 2 | `.rom`-Datei **im Konstruktor** einlesen → `std::vector<bool> m_truthTable` |
+| 3 | `evaluate()`: Pull-Prinzip, Eingänge als Binär-Index, Ausgabe aus Tabelle |
+| 4 | `GateFactory` und `LogicEngine::loadFromFile()` für optionalen Dateipfad erweitern |
+| 5 | Parser-Zeile: `GATE ROM meinDecoder data/decoder.rom` |
+| 6 | Eigene `.rom`- und `.circuit`-Datei anlegen und Funktion nachweisen |
+
+**Wichtig:** Dateizugriff nur im Konstruktor, niemals in `evaluate()`!
+
+### Teil 2: AssertGate (Zusatzaufgabe)
+
+| Schritt | Was zu tun ist |
+|--------|----------------|
+| 1 | Klasse `AssertGate` eigenständig entwerfen (`AssertGate.h` / `AssertGate.cpp`) |
+| 2 | 2 Eingänge: Ist-Wert und Soll-Wert |
+| 3 | Bei Abweichung: Simulation per Exception abbrechen |
+| 4 | `.circuit`-Datei mit absichtlichem Fehlerfall erstellen |
+
+### Teil 3: Abgabe-Dokumentation (in dieser README.md)
+
+Tragen Sie Ihre Antworten **direkt in die Abschnitte unten** ein (Block A–C). Geben Sie ausführliche und spezifische Antworten zu **Ihrem** geschriebenen Code.
+
+---
+
+## Projektstruktur
+
+```
+├── main.cpp                 # Einstiegspunkt (Halbaddierer-Demo)
+├── LogicEngine.h/cpp        # Simulations-Engine & .circuit-Parser
+├── GateFactory.h/cpp        # Factory Pattern – hier ROM/ASSERT einbinden
+├── Component.h/cpp          # Basisklasse Gate
+├── half_adder.circuit       # Beispiel-Schaltung (Referenz)
+├── data/                    # Hier .rom-Dateien ablegen
+├── README.md                # Aufgaben, Abgabe & Antworten (diese Datei)
+├── LaboranleitungTestat.pdf # Aufgabenstellung
+├── archive/                 # Alte Labor-Dateien (nicht kompilieren)
+└── .github/workflows/ci.yml # CI-Pipeline
+```
+
+---
+
+## .circuit-Format (Referenz)
+
+```
+# Kommentare mit # oder //
+GATE SWITCH A
+GATE XOR sum
+WIRE sum 0 A
+WIRE sum 1 B
+```
+
+Nach Ihrer Erweiterung (Teil 1):
+
+```
+GATE ROM meinDecoder data/decoder.rom
+```
+
+---
+
+## .rom-Format
+
+Pro Zeile genau ein Zeichen – `0` oder `1`:
+
+```
+0
+1
+1
+0
+```
+
+Die Zeilennummer entspricht dem Binär-Index der Eingänge (Input 0 = Bit 0 = 2⁰, Input 1 = Bit 1 = 2¹, …).
+
+---
+
+## Kompilierung
+
+```bash
+# Standard (alle .cpp im Hauptverzeichnis)
+g++ -std=c++17 *.cpp -o simulator
+```
+
+> **Hinweis:** Dateien in `archive/` werden nicht mitkompiliert (`g++ *.cpp` nur im Root). Nach dem Anlegen von `RomGate.cpp` (und ggf. `AssertGate.cpp`) werden diese automatisch mitkompiliert.
+
+---
+
+## Abgabe-Checkliste
+
+- [ ] Privates GitHub-Repository erstellt, Dozent eingeladen
+- [ ] `RomGate` implementiert und in Factory/Parser integriert
+- [ ] `.rom`- und `.circuit`-Demo-Dateien erstellt
+- [ ] (Optional) `AssertGate` mit Fehlerfall-Demo
+- [ ] README.md vollständig ausgefüllt (Angaben + Block A–C)
+- [ ] `git push` – finale Abgabe
+- [ ] Repository-URL in Moodle eingereicht
+
+---
+
+## Block A: KI-Protokoll (AI Transparency Log)
+
+Der Einsatz von KI-Tools (GitHub Copilot, ChatGPT, Cursor, etc.) wird begrüßt, soll aber nicht unreflektiert geschehen.
+
+### 1. Welche Werkzeuge haben Sie für diese Aufgabe genutzt?
+
+_[Antwort hier]_
+
+### 2. Fassen Sie Ihren KI-Arbeitsprozess zusammen
+
+**Wie haben Sie Ihre Prompts formuliert?**
+
+_[Antwort hier]_
+
+**Kurze Beschreibung der Anpassungen:** Was mussten Sie am KI-Code oder am Prompt ändern, damit er funktioniert?
+
+_[Antwort hier – z. B. „KI hat Header vergessen“, „Variable umbenannt“, „Modulo-Logik korrigiert“]_
+
+---
+
+## Block B: Architektur-Verständnis
+
+### 1. Warum ist es ein schwerwiegender Fehler, die `std::ifstream`-Logik in `evaluate()` statt im Konstruktor zu platzieren?
+
+_[Antwort hier]_
+
+### 2. Sie haben das RomGate zur LogicEngine hinzugefügt, ohne `LogicEngine::doTick()` umschreiben zu müssen. Welches OOP-Prinzip macht das möglich und wie funktioniert der Mechanismus intern?
+
+_[Antwort hier]_
+
+### 3. Erklären Sie das Ownership-Konzept: `std::unique_ptr` in der Engine vs. `Gate*`-Raw-Pointer für Kabel. Wer löscht den Speicher und warum verhindert das Memory Leaks?
+
+_[Antwort hier]_
+
+---
+
+## Block C: Edge-Cases (Fehlerbehandlung)
+
+### 1. Wie reagiert Ihr Code, wenn in der `.circuit`-Datei ein RomGate angelegt wird, aber der Pfad zur `.rom`-Datei falsch ist (Datei existiert nicht)? Auf welche Code-Zeile verlassen Sie sich in diesem Moment?
+
+_[Antwort hier – mit Dateiname und Zeilennummer]_
+
+### 2. Was passiert in Ihrem `evaluate()`, wenn 3 Kabel am RomGate hängen (max. Index = 7), die Wahrheitstabelle aber nur 4 Zeilen hat? Wie schützt Ihr Code vor einem Segmentation Fault?
+
+_[Antwort hier]_
+
+---
+
+**Viel Erfolg beim Testat!**

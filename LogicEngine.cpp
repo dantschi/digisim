@@ -253,6 +253,8 @@ void LogicEngine::loadFromFile(const std::string& filename) {
         if (command == "GATE") {
             std::string type, name;
             ss >> type >> name;
+            // TODO Testat Teil 1: optionalen dritten Parameter (Dateipfad) für ROM einlesen
+            // Beispiel: GATE ROM meinDecoder data/decoder.rom
             
             if (type.empty() || name.empty()) {
                 std::cerr << "[LogicEngine WARNING] Zeile " << lineNumber 
