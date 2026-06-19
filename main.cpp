@@ -15,7 +15,7 @@
  * 2. .circuit Parser – LogicEngine lädt Schaltungen aus Dateien
  * 3. Halbaddierer – Beispiel einer deklarativen Schaltungs-Definition
  *
- * Ihre Aufgaben (siehe LaboranleitungTestat.pdf):
+ * Ihre Aufgaben (siehe Aufgabenstellung in Moodle / README.md):
  * - Teil 1 (Pflicht): RomGate implementieren und in GateFactory/Parser einbinden
  * - Teil 2 (Zusatz): AssertGate als automatisierte Testbench entwerfen
  * - Teil 3: Antworten in README.md eintragen und per GitHub abgeben
@@ -104,7 +104,7 @@ int main() {
 
     std::cout << "\n═══════════════════════════════════════════════════════════════\n" << std::endl;
     std::cout << "[SUCCESS] Der Halbaddierer funktioniert korrekt!" << std::endl;
-    std::cout << "Nächster Schritt: RomGate implementieren (siehe LaboranleitungTestat.pdf)" << std::endl;
+    std::cout << "Nächster Schritt: RomGate implementieren (siehe README.md / Moodle)" << std::endl;
 
     std::cout << "\n═══════════════════════════════════════════════════════════════\n" << std::endl;
 

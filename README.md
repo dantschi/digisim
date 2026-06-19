@@ -4,7 +4,7 @@
 
 Ein **C++-basierter Simulator für digitale Logikgatter** – Ausgangspunkt für das Abschluss-Testat *ROM-Speicher & Automatisierte Testbench*.
 
-Die vollständige Aufgabenstellung finden Sie in **`LaboranleitungTestat.pdf`**.
+Die vollständige Aufgabenstellung erhalten Sie über **Moodle**.
 
 ---
 
@@ -88,7 +88,6 @@ Tragen Sie Ihre Antworten **direkt in die Abschnitte unten** ein (Block A–C). 
 ├── half_adder.circuit       # Beispiel-Schaltung (Referenz)
 ├── data/                    # Hier .rom-Dateien ablegen
 ├── README.md                # Aufgaben, Abgabe & Antworten (diese Datei)
-├── LaboranleitungTestat.pdf # Aufgabenstellung
 ├── archive/                 # Alte Labor-Dateien (nicht kompilieren)
 └── .github/workflows/ci.yml # CI-Pipeline
 ```
