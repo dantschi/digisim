@@ -51,7 +51,6 @@ Erwartete Ausgabe: Wahrheitstabelle des Halbaddierers (Sum & Carry für alle Ein
 ├── Component.h/cpp          # Basisklasse Gate
 ├── half_adder.circuit       # Beispiel-Schaltung
 ├── data/                    # Ordner für Dateien
-├── archive/                 # Alte Labor-Dateien (nicht kompilieren)
 └── .github/workflows/ci.yml # CI-Pipeline
 ```
 
@@ -74,8 +73,6 @@ WIRE sum 1 B
 ```bash
 g++ -std=c++17 *.cpp -o simulator
 ```
-
-> **Hinweis:** Dateien in `archive/` werden nicht mitkompiliert (`g++ *.cpp` nur im Root).
 
 ---
 
