@@ -5,20 +5,13 @@
 
 /**
  * =====================================================================
- * Abschluss-Testat: ROM-Speicher & Automatisierte Testbench
+ * C++ Digital Simulator – Ausgangszustand (Labor 12)
  * =====================================================================
- *
- * Startpunkt: Labor 12 (Bauteil-Fabrik & .circuit Parser)
  *
  * Diese Demonstration zeigt den funktionierenden Ausgangszustand:
  * 1. GateFactory – Factory Pattern für Gatter-Erzeugung
  * 2. .circuit Parser – LogicEngine lädt Schaltungen aus Dateien
  * 3. Halbaddierer – Beispiel einer deklarativen Schaltungs-Definition
- *
- * Ihre Aufgaben (siehe Aufgabenstellung in Moodle / README.md):
- * - Teil 1 (Pflicht): RomGate implementieren und in GateFactory/Parser einbinden
- * - Teil 2 (Zusatz): AssertGate als automatisierte Testbench entwerfen
- * - Teil 3: Antworten in README.md eintragen und per GitHub abgeben
  *
  * Der Halbaddierer:
  *   A ----\
@@ -32,7 +25,7 @@
 
 int main() {
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
-    std::cout << "  C++ Digital Simulator - Abschluss-Testat" << std::endl;
+    std::cout << "  C++ Digital Simulator" << std::endl;
     std::cout << "  Ausgangszustand: Halbaddierer (Labor 12)" << std::endl;
     std::cout << "═══════════════════════════════════════════════════════════════\n" << std::endl;
 
@@ -104,7 +97,6 @@ int main() {
 
     std::cout << "\n═══════════════════════════════════════════════════════════════\n" << std::endl;
     std::cout << "[SUCCESS] Der Halbaddierer funktioniert korrekt!" << std::endl;
-    std::cout << "Nächster Schritt: RomGate implementieren (siehe README.md / Moodle)" << std::endl;
 
     std::cout << "\n═══════════════════════════════════════════════════════════════\n" << std::endl;
 
